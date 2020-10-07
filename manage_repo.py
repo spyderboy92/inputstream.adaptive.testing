@@ -136,13 +136,14 @@ def get_commit_names(repo, tag1, tag2):
 
 def generate_changelog(repo):
     tags = [t.name for t in repo.tags]
+    tags = sorted(tags, key=lambda x: x.strip('v'))[-2:]
     ver = get_version(repo)
     tags.append('v' + ver)
     tags.reverse()
     lines = []
     for i, tag in enumerate(tags):
         if i == len(tags)-1:
-            commits = ['Initial version']
+            commits = None
         else:
             commits = get_commit_names(repo, tag, tags[i+1])
         if commits:
