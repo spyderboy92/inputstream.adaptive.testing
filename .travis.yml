@@ -1,37 +1,262 @@
+os: linux
+dist: xenial
 language: cpp
-
-#
-# Define the build matrix
-#
-# Travis defaults to building on Ubuntu Precise when building on
-# Linux. We need Trusty in order to get up to date versions of
-# cmake and g++.
-#
+compiler: gcc
 env:
   global:
-    - app_id=inputstream.adaptive
+    - APP_ID=inputstream.adaptive.testing
+    - secure: "cEcDRo+aWtu0+qCS7oE7bZ23OzbFvsdT1I9P/W2i4VBU9FfDVxuXjX8rG3kUrN7xIxJnEWrJRtrhOHOVjzqZ5tnBsbTLS4mbII4HtPpGpOpxOdnDzeyOa93UgAyMD/SWUFzN/vhgn/LtG0oMqZcQDj7L4ccMkjz4h7075iMxQhSo8vmNyDIpjGwFrHFfifXSZoc0oZsszqXauxLFvPsaXpuTeO86iQdrJ4zUJw+OVnASD6UtQm1LcunJ3N8HsgGKzZGOjUZ2ZxhAf/+00pTOozh6nrlguPs2CgJuHC6J579dckT7OjkjTeGFbqH7bEITQpyH35tXffDs6lptpdcpLjp7m8McAG47CCAyYKmyKRMxTB9M5r4b9QwGsSCO9IxEQQHi/c+WR+bUOp/bYaVYygsJTT+1I0a8mrJ+vOrjhfK1O5pNKNv6Vd1WlTdo8pG6EXMw/P/HpNFpVfHPP0zCNbG+lBCogfaIwVkU+xNWCSXPZC0BbG8Jl/14W1M5scB4sFIYGtdsljOyHYbYTARpwnQS/ar+JpbNOUPkk+/NmKA3YOCQoVi69w/FK4SJR+2e0PCUwES86plYFkg5DzqmR4rpSVshe7dpq6Fl163ktQIfJRvQPvqdfRd/yYtJAMAls7Z7X5UfpjSQR97ndvOx2/cwkdxRTW3dKmWO5rQLhu0="
 
-matrix:
+jobs:
   include:
-    - os: linux
-      dist: xenial
-      sudo: required
-      compiler: gcc
-    - os: linux
-      dist: xenial
-      sudo: required
-      compiler: clang
-    - os: osx
-      osx_image: xcode10.2
+    - stage: compile
+      env: PLATFORM="linux" ARCH="aarch64" KODI_VERSION="leia"
+      workspaces:
+        create:
+          name: linux-aarch64-leia
+          paths: $HOME/zips
+    - env: PLATFORM="linux" ARCH="aarch64" KODI_VERSION="matrix"
+      dist: bionic
+      workspaces:
+        create:
+          name: linux-aarch64-matrix
+          paths: $HOME/zips
+          
+    - env: PLATFORM="linux" ARCH="armv7" KODI_VERSION="leia"
+      workspaces:
+        create:
+          name: linux-armv7-leia
+          paths: $HOME/zips
+    - env: PLATFORM="linux" ARCH="armv7" KODI_VERSION="matrix"
+      dist: bionic
+      workspaces:
+        create:
+          name: linux-armv7-matrix
+          paths: $HOME/zips
 
-#
-# The addon source is automatically checked out in $TRAVIS_BUILD_DIR,
-# we'll put the Kodi source on the same level
-#
-before_script:
-  - cd $TRAVIS_BUILD_DIR/..
-  - git clone --branch master --depth=1 https://github.com/xbmc/xbmc.git -b master
-  - cd ${app_id} && mkdir build && cd build
-  - cmake -DADDONS_TO_BUILD=${app_id} -DADDON_SRC_PREFIX=$TRAVIS_BUILD_DIR/.. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$TRAVIS_BUILD_DIR/../xbmc/addons -DPACKAGE_ZIP=1 $TRAVIS_BUILD_DIR/../xbmc/cmake/addons
+    - env: PLATFORM="linux" ARCH="x86_64" KODI_VERSION="leia"
+      workspaces:
+        create:
+          name: linux-x86_64-leia
+          paths: $HOME/zips
+    - env: PLATFORM="linux" ARCH="x86_64" KODI_VERSION="matrix"
+      dist: bionic
+      workspaces:
+        create:
+          name: linux-x86_64-matrix
+          paths: $HOME/zips
 
-script: make
+    - env: PLATFORM="android" ARCH="aarch64" KODI_VERSION="leia"
+      workspaces:
+        create:
+          name: android-aarch64-leia
+          paths: $HOME/zips
+    - env: PLATFORM="android" ARCH="aarch64" KODI_VERSION="matrix"
+      dist: bionic
+      workspaces:
+        create:
+          name: android-aarch64-matrix
+          paths: $HOME/zips
+    
+    - env: PLATFORM="android" ARCH="armv7" KODI_VERSION="leia"
+      workspaces:
+        create:
+          name: android-armv7-leia
+          paths: $HOME/zips
+    - env: PLATFORM="android" ARCH="armv7" KODI_VERSION="matrix"
+      dist: bionic
+      workspaces:
+        create:
+          name: android-armv7-matrix
+          paths: $HOME/zips
+    
+    - env: PLATFORM="darwin" ARCH="x86_64" KODI_VERSION="leia"
+      os: osx
+      osx_image: xcode11.3
+      before_cache:
+        - brew cleanup
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
+          - /usr/local/Homebrew
+      addons:
+        homebrew:
+          packages:
+          - aria2
+          - gnu-getopt
+          - gnu-sed
+          - bash
+          - coreutils
+      install:
+        - echo 'export PATH="/usr/local/opt/gnu-getopt/bin:$PATH"' >> ~/.bash_profile && . ~/.bash_profile
+        - pip3 install gitpython
+        - git clone https://github.com/johnny5-is-alive/iat-repo.git $HOME/.deploy
+      workspaces:
+        create:
+          name: darwin-x86_64-leia
+          paths: $HOME/zips
+    - env: PLATFORM="darwin" ARCH="x86_64" KODI_VERSION="matrix"
+      os: osx
+      osx_image: xcode11.3
+      before_cache:
+        - brew cleanup
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
+          - /usr/local/Homebrew
+      addons:
+        homebrew:
+          packages:
+          - aria2
+          - gnu-getopt
+          - gnu-sed
+          - bash
+          - coreutils
+      install:
+        - echo 'export PATH="/usr/local/opt/gnu-getopt/bin:$PATH"' >> ~/.bash_profile && . ~/.bash_profile
+        - pip3 install gitpython
+        - git clone https://github.com/johnny5-is-alive/iat-repo.git $HOME/.deploy
+      workspaces:
+        create:
+          name: darwin-x86_64-matrix
+          paths: $HOME/zips
+    
+    - env: PLATFORM="windows" ARCH="x86" KODI_VERSION="leia"
+      os: windows
+      install: skip
+      before_script:
+        - export VS150COMNTOOLS="/c/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/Common7/Tools"
+      workspaces:
+        create:
+          name: windows-x86-leia
+          paths: $HOME/zips
+    - env: PLATFORM="windows" ARCH="x86_64" KODI_VERSION="leia"
+      os: windows
+      install: skip
+      before_script:
+        - export VS150COMNTOOLS="/c/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/Common7/Tools"
+      workspaces:
+        create:
+          name: windows-x86_64-leia
+          paths: $HOME/zips
+    - env: PLATFORM="windows" ARCH="x86_64" KODI_VERSION="matrix"
+      os: windows
+      install: skip
+      before_script:
+        - export VS150COMNTOOLS="/c/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/Common7/Tools"
+      workspaces:
+        create:
+          name: windows-x86_64-matrix
+          paths: $HOME/zips
+    
+
+    - stage: deploy-main-android-windows
+      if: tag IS present
+      language: python
+      workspaces:
+        use:
+          - android-aarch64-leia
+          - android-aarch64-matrix
+          - android-armv7-leia
+          - android-armv7-matrix
+          - windows-x86-leia
+          - windows-x86_64-leia
+          - windows-x86_64-matrix
+      install:
+        - pip3 install gitpython
+        - git clone https://github.com/johnny5-is-alive/iat-repo.git $HOME/.deploy
+      script:
+        - mv $TRAVIS_BUILD_DIR/C:/Users/travis/zips/*.zip $HOME/zips
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k leia -r main
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k matrix -r main
+    
+    - stage: deploy-main-macos
+      if: tag IS present
+      os: osx
+      osx_image: xcode11.3
+      before_cache:
+        - brew cleanup
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
+          - /usr/local/Homebrew
+      addons:
+        homebrew:
+          packages:
+          - gnu-getopt
+          - bash
+          - coreutils
+      install:
+        - echo 'export PATH="/usr/local/opt/gnu-getopt/bin:$PATH"' >> ~/.bash_profile && . ~/.bash_profile
+        - pip3 install gitpython
+        - git clone https://github.com/johnny5-is-alive/iat-repo.git $HOME/.deploy
+      language: shell
+      workspaces:
+        use:
+          - darwin-x86_64-leia
+          - darwin-x86_64-matrix
+      script:
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k leia -r main
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k matrix -r main
+    
+    - stage: deploy-linux-aarch64
+      if: tag IS present
+      language: python
+      workspaces:
+        use:
+          - linux-aarch64-leia
+          - linux-aarch64-matrix
+      install:
+        - pip3 install gitpython
+        - git clone https://github.com/johnny5-is-alive/iat-repo.git $HOME/.deploy
+      script:
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k leia -r linux-aarch64
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k matrix -r linux-aarch64
+    
+    - stage: deploy-linux-armv7
+      if: tag IS present
+      language: python
+      workspaces:
+        use:
+          - linux-armv7-leia
+          - linux-armv7-matrix
+      install:
+        - pip3 install gitpython
+        - git clone https://github.com/johnny5-is-alive/iat-repo.git $HOME/.deploy
+      script:
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k leia -r linux-armv7
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k matrix -r linux-armv7
+    
+    - stage: deploy-linux-x86_64
+      if: tag IS present
+      language: python
+      workspaces:
+        use:
+          - linux-x86_64-leia
+          - linux-x86_64-matrix
+      install:
+        - pip3 install gitpython
+        - git clone https://github.com/johnny5-is-alive/iat-repo.git $HOME/.deploy
+      script:
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k leia -r linux-x86_64
+        - bash -x $TRAVIS_BUILD_DIR/build_scripts/deploy.sh -k matrix -r linux-x86_64
+        - cd $HOME/.deploy
+        - git checkout master
+        - git merge travis-build-$TRAVIS_BUILD_NUMBER
+        - git push origin --delete travis-build-$TRAVIS_BUILD_NUMBER
+        - git push --set-upstream origin master
+
+install:
+  - sudo apt-get update && sudo apt-get -y update
+  - sudo apt install -y --no-install-recommends build-essential git cmake unzip aria2 default-jdk python3
+
+script:
+  - shopt -s expand_aliases
+  - '[[ $TRAVIS_OS_NAME = "osx" ]] && alias bsh="/usr/local/bin/bash" && export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH" || alias bsh="/bin/bash"'
+  - bsh -x $TRAVIS_BUILD_DIR/build_scripts/build-ia.sh
+    --kodiversion $KODI_VERSION
+    --no-apt-install
+    --arch $ARCH 
+    --platform $PLATFORM
+  - mkdir -p $HOME/zips  
+  - mv $HOME/*.zip $HOME/zips  
