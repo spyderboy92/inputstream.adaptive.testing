@@ -130,6 +130,11 @@ rm -f $HOME/$ZIP_NAME
 if [[ ! $NO_APT_INSTALL = yes ]]; then
     sudo apt-get update && sudo apt-get -y update
     sudo apt install -y --no-install-recommends build-essential git cmake unzip aria2 default-jdk python3
+    if [[ $ARCH = aarch64 ]] && [[ $PLATFORM = linux ]]; then
+      sudo apt install -y --no-install-recommends crossbuild-essential-arm64
+    elif [[ $ARCH = armv7 ]] && [[ $PLATFORM = linux ]]; then
+      sudo apt install -y --no-install-recommends crossbuild-essential-armhf
+    fi
 fi
 
 ### ANDROID TOOLS ###

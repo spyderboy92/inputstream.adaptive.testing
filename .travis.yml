@@ -10,12 +10,16 @@ env:
 jobs:
   include:
     - stage: compile
+      after_install:
+        - sudo apt install -y --no-install-recommends crossbuild-essential-arm64
       env: PLATFORM="linux" ARCH="aarch64" KODI_VERSION="leia"
       workspaces:
         create:
           name: linux-aarch64-leia
           paths: $HOME/zips
     - env: PLATFORM="linux" ARCH="aarch64" KODI_VERSION="matrix"
+      after_install:
+        - sudo apt install -y --no-install-recommends crossbuild-essential-arm64
       dist: bionic
       workspaces:
         create:
@@ -23,11 +27,15 @@ jobs:
           paths: $HOME/zips
           
     - env: PLATFORM="linux" ARCH="armv7" KODI_VERSION="leia"
+      after_install:
+        - sudo apt install -y --no-install-recommends crossbuild-essential-armhf
       workspaces:
         create:
           name: linux-armv7-leia
           paths: $HOME/zips
     - env: PLATFORM="linux" ARCH="armv7" KODI_VERSION="matrix"
+      after_install:
+        - sudo apt install -y --no-install-recommends crossbuild-essential-armhf
       dist: bionic
       workspaces:
         create:
