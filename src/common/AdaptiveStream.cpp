@@ -22,6 +22,7 @@
 #include "../oscompat.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 
@@ -51,7 +52,9 @@ AdaptiveStream::AdaptiveStream(AdaptiveTree& tree,
     lastMediaRenewal_(std::chrono::system_clock::now()),
     m_fixateInitialization(false),
     m_segmentFileOffset(0),
-    play_timeshift_buffer_(play_timeshift_buffer)
+    play_timeshift_buffer_(play_timeshift_buffer),
+    assured_buffer_length_(5),
+    max_buffer_length_(10)
 {
   segment_buffers_.resize(MAXSEGMENTBUFFER + 1);
   current_rep_->current_segment_ = nullptr;
@@ -220,6 +223,24 @@ bool AdaptiveStream::start_stream()
 {
   if (!current_rep_)
     return false;
+
+  assured_buffer_length_ = current_rep_->assured_buffer_duration_;
+  assured_buffer_length_ = std::ceil((assured_buffer_length_ * current_rep_->segtpl_.timescale) /
+                                     (float)current_rep_->segtpl_.duration);
+  //TO DO: segtpl_ case has to be tested and proven
+
+  max_buffer_length_ = current_rep_->max_buffer_duration_;
+  max_buffer_length_ = std::ceil((max_buffer_length_ * current_rep_->segtpl_.timescale) /
+                                 (float)current_rep_->segtpl_.duration);
+  assured_buffer_length_ =
+      assured_buffer_length_ < 4 ? 4 : assured_buffer_length_; //for incorrect settings input
+  if (max_buffer_length_ <= assured_buffer_length_) //for incorrect settings input
+    max_buffer_length_ = assured_buffer_length_ + 4u;
+
+  Log(LOGLEVEL_DEBUG, "assured_buffer_length_ (no of segments) = %u", assured_buffer_length_);
+  Log(LOGLEVEL_DEBUG, "max_buffer_length_ (no of segments) = %u", max_buffer_length_);
+
+  segment_buffers_.resize(max_buffer_length_ + 1);
 
   if (!thread_data_)
   {
@@ -505,7 +526,7 @@ bool AdaptiveStream::ensureSegment()
       ResolveSegmentBase(newRep, false); // For DASH
       tree_.prepareRepresentation(current_period_, current_adp_, newRep, false); // For HLS
 
-      for (size_t updPos(available_segment_buffers_); updPos < 5 /* TODO */; ++updPos)
+      for (size_t updPos(available_segment_buffers_); updPos < max_buffer_length_; ++updPos)
       {
         const AdaptiveTree::Segment* futureSegment = newRep->get_segment(nextsegmentPos + updPos);
 

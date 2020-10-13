@@ -177,6 +177,10 @@ public:
     uint16_t width_, height_;
     uint32_t fpsRate_, fpsScale_;
     float aspect_;
+
+    //For setting buffer duration
+    uint32_t assured_buffer_duration_; //Length(in sec) to be tried to be filled at any cost
+    uint32_t max_buffer_duration_; //Maximum length(in sec) to be filled
     //Flags
     static const uint16_t BYTERANGE = 0;
     static const uint16_t INDEXRANGEEXACT = 1;

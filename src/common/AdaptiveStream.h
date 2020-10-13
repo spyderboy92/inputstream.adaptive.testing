@@ -161,6 +161,11 @@ namespace adaptive
     // number of segment_buffers which are downloaded / downloading
     size_t valid_segment_buffers_;
 
+    // stores required segments obtained from assured_buffer_duration_(sec)
+    uint32_t assured_buffer_length_;
+    // stores required segments obtained from max_buffer_duration_(sec)
+    uint32_t max_buffer_length_;
+
     std::map<std::string, std::string> media_headers_, download_headers_;
     std::size_t segment_read_pos_;
     uint64_t absolute_position_;
